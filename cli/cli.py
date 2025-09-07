@@ -2,6 +2,7 @@ import click
 import subprocess
 
 DOCKER_CONTAINER_NAME = "mc-bedrock"
+PATH_TO_CONTAINER = "~/mc-bedrock"
 
 def out(out: subprocess.CompletedProcess) -> None:
     click.echo(out.stdout)
@@ -25,12 +26,35 @@ def start() -> None:
     ])
 
 @cli.command()
+def up() -> None:
+    """Rebuild the server container from the docker-compose.yml file"""
+    click.echo(f"Rebuilding {DOCKER_CONTAINER_NAME}")
+    docker_cmd([
+        "compose",
+        "-f",
+        f"{PATH_TO_CONTAINER}/docker-compose.yml"
+        "up",
+        "-d"
+    ])
+
+@cli.command()
 def stop() -> None:
     """Stop the Minecraft Bedrock Server."""
     click.echo(f"Stopping {DOCKER_CONTAINER_NAME}...")
     docker_cmd([
         "stop", 
         DOCKER_CONTAINER_NAME
+    ])
+
+@cli.command()
+def down() -> None:
+    """Stops and cleans up the container"""
+    click.echo(f"Stopping and cleaning up {DOCKER_CONTAINER_NAME}")
+    docker_cmd([
+        "compose",
+        "-f",
+        f"{PATH_TO_CONTAINER}/docker-compose.yml"
+        "down"
     ])
 
 @cli.command()
