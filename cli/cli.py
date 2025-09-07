@@ -11,9 +11,9 @@ def out(out: subprocess.CompletedProcess) -> None:
 
 def docker_cmd(args: str, out: bool) -> None:
     if out:
-        out(subprocess.run(["docker"] + args, capture_output=True, text=True))
+        out(subprocess.run(["docker"] + args, capture_output=True, check=True, text=True))
     else:
-        subprocess.run(["docker"] + args, capture_output=True, text=True)
+        subprocess.run(["docker"] + args, capture_output=True, check=True, text=True)
 
 @click.group()
 def cli() -> None:
@@ -78,7 +78,7 @@ def logs() -> None:
     click.echo(f"Logs of {DOCKER_CONTAINER_NAME}...")
     docker_cmd([
         "logs", 
-        "-f", 
+        # "-f", 
         DOCKER_CONTAINER_NAME
     ], False)
 
