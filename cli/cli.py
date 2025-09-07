@@ -5,13 +5,13 @@ import subprocess
 DOCKER_CONTAINER_NAME = "mc-bedrock"
 PATH_TO_CONTAINER = "~/mc-bedrock"
 
-def out(out: subprocess.CompletedProcess) -> None:
+def write_out(out: subprocess.CompletedProcess) -> None:
     click.echo(out.stdout)
     click.echo(out.stderr)
 
 def docker_cmd(args: str, out: bool) -> None:
     if out is True:
-        out(subprocess.run(["docker"] + args, capture_output=True, text=True))
+        write_out(subprocess.run(["docker"] + args, capture_output=True, text=True))
     else:
         subprocess.run(["docker"] + args, capture_output=True, text=True)
 
