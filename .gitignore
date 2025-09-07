@@ -2,3 +2,4 @@ venv/
 **/*__pycache__/
 *.pyc
 mc_cli.egg-info/
+build/
