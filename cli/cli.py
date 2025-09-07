@@ -10,7 +10,7 @@ def out(out: subprocess.CompletedProcess) -> None:
     click.echo(out.stderr)
 
 def docker_cmd(args: str, out: bool) -> None:
-    if out:
+    if out is True:
         out(subprocess.run(["docker"] + args, capture_output=True, text=True))
     else:
         subprocess.run(["docker"] + args, capture_output=True, text=True)
