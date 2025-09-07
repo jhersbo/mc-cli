@@ -33,8 +33,7 @@ def up() -> None:
         "compose",
         "-f",
         f"{PATH_TO_CONTAINER}/docker-compose.yml"
-        "up",
-        "-d"
+        "up"
     ])
 
 @cli.command()
