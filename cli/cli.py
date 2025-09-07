@@ -1,3 +1,4 @@
+from pickle import TRUE
 import click
 import subprocess
 
@@ -8,8 +9,11 @@ def out(out: subprocess.CompletedProcess) -> None:
     click.echo(out.stdout)
     click.echo(out.stderr)
 
-def docker_cmd(args: str) -> None:
-    out(subprocess.run(["docker"] + args, capture_output=True, text=True))
+def docker_cmd(args: str, out: bool) -> None:
+    if out:
+        out(subprocess.run(["docker"] + args, capture_output=True, text=True))
+    else:
+        subprocess.run(["docker"] + args, capture_output=True, text=True)
 
 @click.group()
 def cli() -> None:
@@ -23,7 +27,7 @@ def start() -> None:
     docker_cmd([
         "start", 
         DOCKER_CONTAINER_NAME
-    ])
+    ], True)
 
 @cli.command()
 def up() -> None:
@@ -35,7 +39,7 @@ def up() -> None:
         f"{PATH_TO_CONTAINER}/docker-compose.yml"
         "up",
         "-d"
-    ])
+    ], True)
 
 @cli.command()
 def stop() -> None:
@@ -44,7 +48,7 @@ def stop() -> None:
     docker_cmd([
         "stop", 
         DOCKER_CONTAINER_NAME
-    ])
+    ], True)
 
 @cli.command()
 def down() -> None:
@@ -55,7 +59,7 @@ def down() -> None:
         "-f",
         f"{PATH_TO_CONTAINER}/docker-compose.yml"
         "down"
-    ])
+    ], True)
 
 @cli.command()
 def status() -> None:
@@ -66,7 +70,7 @@ def status() -> None:
         "-a", 
         "--filter", 
         f"name={DOCKER_CONTAINER_NAME}"
-    ])
+    ], True)
 
 @cli.command()
 def logs() -> None:
@@ -76,7 +80,7 @@ def logs() -> None:
         "logs", 
         "-f", 
         DOCKER_CONTAINER_NAME
-    ])
+    ], False)
 
 @cli.command()
 @click.argument("backup_name", default="backup.tar.gz")
@@ -84,17 +88,17 @@ def logs() -> None:
 def backup(backup_name: str, backup_dest: str) -> None:
     """Backup the Minecraft world data."""
     click.echo(f"Attempting to backup world data to {backup_dest}/{backup_name}...")
-    out(docker_cmd([
+    docker_cmd([
         "exec", 
         DOCKER_CONTAINER_NAME, 
         "tar", 
         "czf", 
         f"/data/backups/{backup_name}", 
         "/data/worlds"
-    ]))
-    out(docker_cmd([
+    ], True)
+    docker_cmd([
         "cp", 
         f"{DOCKER_CONTAINER_NAME}:/data/backups/{backup_name}", 
         f"{backup_dest}/{backup_name}"
-    ]))
+    ], True)
     click.echo("Backup complete...")
