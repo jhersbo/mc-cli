@@ -3,3 +3,4 @@ venv/
 *.pyc
 mc_cli.egg-info/
 build/
+**/logs

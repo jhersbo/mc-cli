@@ -1,1 +1,2 @@
-click>=8.2.1
+click
+loguru>=0.7.3
