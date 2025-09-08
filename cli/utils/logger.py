@@ -175,7 +175,7 @@ PATH_TO_LOGS = str(Path("~/mc-logs").expanduser().resolve())
 # Global logger instance
 cli_logger = CLILogger(
     log_file=f"{PATH_TO_LOGS}/mc-cli.log",
-    log_level="DEBUG",
+    log_level="INFO",
     show_timestamps=False,
     colorize=True
 )
