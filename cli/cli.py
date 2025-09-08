@@ -7,27 +7,27 @@ DOCKER_CONTAINER_NAME = "mc-bedrock"
 PATH_TO_CONTAINER = str(Path("~/mc-bedrock").expanduser().resolve())
 PATH_TO_LOCAL_BACKUPS = str(Path("~/mc-backups").expanduser().resolve())
 
-def docker_cmd(args: str, out: bool) -> subprocess.CompletedProcess:
+def docker_cmd(args: str) -> subprocess.CompletedProcess:
     """Run a docker command and return the result."""
     command = " ".join(args)
     cli_logger.docker_command(command, DOCKER_CONTAINER_NAME)
     
     result = subprocess.run(["docker"] + args, capture_output=True, text=True)
     
-    if out is True:
-        if result.stdout:
-            cli_logger.info("Docker output:")
-            # Print each line of stdout
-            for line in result.stdout.strip().split('\n'):
-                if line.strip():
-                    cli_logger.info(f"  {line}")
-        
-        if result.stderr:
-            cli_logger.warning("Docker warnings/errors:")
-            # Print each line of stderr
-            for line in result.stderr.strip().split('\n'):
-                if line.strip():
-                    cli_logger.warning(f"  {line}")
+    # Always log output
+    if result.stdout:
+        cli_logger.info("Docker output:")
+        # Print each line of stdout
+        for line in result.stdout.strip().split('\n'):
+            if line.strip():
+                cli_logger.info(f"  {line}")
+    
+    if result.stderr:
+        cli_logger.warning("Docker warnings/errors:")
+        # Print each line of stderr
+        for line in result.stderr.strip().split('\n'):
+            if line.strip():
+                cli_logger.warning(f"  {line}")
     
     # Debug: Log the return code
     cli_logger.debug(f"Docker command '{command}' returned code: {result.returncode}")
@@ -50,7 +50,7 @@ def start() -> None:
     result = docker_cmd([
         "start", 
         DOCKER_CONTAINER_NAME
-    ], True)
+    ])
     
     if is_cmd_successful(result):
         cli_logger.docker_success("start", DOCKER_CONTAINER_NAME)
@@ -68,7 +68,7 @@ def up() -> None:
         f"{PATH_TO_CONTAINER}/docker-compose.yml",
         "up",
         "-d"
-    ], True)
+    ])
     
     if is_cmd_successful(result):
         cli_logger.docker_success("compose up", DOCKER_CONTAINER_NAME)
@@ -83,7 +83,7 @@ def stop() -> None:
     result = docker_cmd([
         "stop", 
         DOCKER_CONTAINER_NAME
-    ], True)
+    ])
     
     if is_cmd_successful(result):
         cli_logger.docker_success("stop", DOCKER_CONTAINER_NAME)
@@ -100,7 +100,7 @@ def down() -> None:
         "-f",
         f"{PATH_TO_CONTAINER}/docker-compose.yml",
         "down"
-    ], True)
+    ])
     
     if is_cmd_successful(result):
         cli_logger.docker_success("compose down", DOCKER_CONTAINER_NAME)
@@ -117,7 +117,7 @@ def status() -> None:
         "-a", 
         "--filter", 
         f"name={DOCKER_CONTAINER_NAME}"
-    ], True)
+    ])
     
     # Also show the raw result for debugging
     cli_logger.debug(f"Raw stdout: {repr(result.stdout)}")
@@ -129,25 +129,16 @@ def logs() -> None:
     """Get the logs of the Minecraft Bedrock Server."""
     cli_logger.info(f"Showing logs for {DOCKER_CONTAINER_NAME}...")
     cli_logger.info("Press Ctrl+C to stop following logs")
-    docker_cmd([
-        "logs", 
-        "-f", 
-        DOCKER_CONTAINER_NAME
-    ], False)
-
-@cli.command()
-def test_logging() -> None:
-    """Test the logging functionality."""
-    cli_logger.info("Testing info logging")
-    cli_logger.success("Testing success logging")
-    cli_logger.warning("Testing warning logging")
-    cli_logger.error("Testing error logging")
-    cli_logger.debug("Testing debug logging")
     
-    # Test with a command that should produce stderr
-    cli_logger.info("Testing Docker command with potential errors...")
-    result = docker_cmd(["ps", "--filter", "name=nonexistent-container"], True)
-    cli_logger.info(f"Command completed with return code: {result.returncode}")
+    # For logs, we need to stream output in real-time, not capture it
+    import subprocess
+    command = ["docker", "logs", "-f", DOCKER_CONTAINER_NAME]
+    cli_logger.docker_command("logs -f", DOCKER_CONTAINER_NAME)
+    
+    try:
+        subprocess.run(command, text=True)
+    except KeyboardInterrupt:
+        cli_logger.info("Logs following stopped by user")
 
 @cli.command()
 @click.argument("backup_name", default="backup.tar.gz")
@@ -165,7 +156,7 @@ def backup(backup_name: str, backup_dest: str) -> None:
         "czf", 
         f"/data/backups/{backup_name}", 
         "/data/worlds"
-    ], True)
+    ])
     
     if not is_cmd_successful(archive_result):
         cli_logger.backup_error(backup_name, backup_dest, "Failed to create archive inside container")
@@ -177,7 +168,7 @@ def backup(backup_name: str, backup_dest: str) -> None:
         "cp", 
         f"{DOCKER_CONTAINER_NAME}:/data/backups/{backup_name}", 
         f"{backup_dest}/{backup_name}"
-    ], True)
+    ])
     
     if not is_cmd_successful(copy_result):
         cli_logger.backup_error(backup_name, backup_dest, "Failed to copy backup to local filesystem")
