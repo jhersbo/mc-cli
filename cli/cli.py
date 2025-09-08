@@ -1,3 +1,6 @@
+import json
+import tempfile
+import os
 import click
 import subprocess
 from pathlib import Path
@@ -14,22 +17,18 @@ def docker_cmd(args: str) -> subprocess.CompletedProcess:
     
     result = subprocess.run(["docker"] + args, capture_output=True, text=True)
     
-    # Always log output
     if result.stdout:
         cli_logger.info("Docker output:")
-        # Print each line of stdout
         for line in result.stdout.strip().split('\n'):
             if line.strip():
                 cli_logger.info(f"  {line}")
     
     if result.stderr:
         cli_logger.warning("Docker warnings/errors:")
-        # Print each line of stderr
         for line in result.stderr.strip().split('\n'):
             if line.strip():
                 cli_logger.warning(f"  {line}")
     
-    # Debug: Log the return code
     cli_logger.debug(f"Docker command '{command}' returned code: {result.returncode}")
     
     return result
@@ -175,3 +174,55 @@ def backup(backup_name: str, backup_dest: str) -> None:
         raise click.ClickException("Docker cp command failed")
     
     cli_logger.backup_success(backup_name, backup_dest)
+
+@cli.command()
+@click.argument("name")
+@click.argument("uuid")
+def add_user(name: str, uuid: str) -> None:
+    """Adds a user to the allowlist.json file"""
+    cli_logger.info(f"Adding user '{name}' to allowlist...")
+    
+    allowlist_path = Path(f"{PATH_TO_CONTAINER}/data/allowlist.json")
+    
+    allowlist_data = []
+    try:
+        with open(allowlist_path, 'r') as f:
+            allowlist_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        allowlist_data = []
+    
+    if any(user.get("name") == name or user.get("uuid") == uuid for user in allowlist_data):
+        raise click.ClickException("User already exists in allowlist")
+    
+    allowlist_data.append({"name": name, "uuid": uuid})
+    
+    with open(allowlist_path, 'w') as f:
+        json.dump(allowlist_data, f, indent=2)
+    
+    cli_logger.success(f"Added user '{name}' to allowlist")
+
+@cli.command()
+@click.argument("name")
+def remove_user(name: str) -> None:
+    """Removes a user from the allowlist.json file"""
+    cli_logger.info(f"Removing user '{name}' from allowlist...")
+    
+    allowlist_path = Path(f"{PATH_TO_CONTAINER}/data/allowlist.json")
+    
+    allowlist_data = []
+    try:
+        with open(allowlist_path, 'r') as f:
+            allowlist_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        allowlist_data = []
+    
+    original_count = len(allowlist_data)
+    allowlist_data = [user for user in allowlist_data if user.get("name") != name]
+    
+    if len(allowlist_data) == original_count:
+        raise click.ClickException(f"User '{name}' not found in allowlist")
+    
+    with open(allowlist_path, 'w') as f:
+        json.dump(allowlist_data, f, indent=2)
+    
+    cli_logger.success(f"Removed user '{name}' from allowlist")
