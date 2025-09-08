@@ -1,5 +1,5 @@
 import json
-import tempfile
+from tempfile import NamedTemporaryFile
 import os
 import click
 import subprocess
@@ -129,8 +129,6 @@ def logs() -> None:
     cli_logger.info(f"Showing logs for {DOCKER_CONTAINER_NAME}...")
     cli_logger.info("Press Ctrl+C to stop following logs")
     
-    # For logs, we need to stream output in real-time, not capture it
-    import subprocess
     command = ["docker", "logs", "-f", DOCKER_CONTAINER_NAME]
     cli_logger.docker_command("logs -f", DOCKER_CONTAINER_NAME)
     
@@ -182,24 +180,37 @@ def add_user(name: str, uuid: str) -> None:
     """Adds a user to the allowlist.json file"""
     cli_logger.info(f"Adding user '{name}' to allowlist...")
     
-    allowlist_path = Path(f"{PATH_TO_CONTAINER}/data/allowlist.json")
+    # Read existing allowlist or start empty
+    read_result = docker_cmd([
+        "exec", 
+        DOCKER_CONTAINER_NAME, 
+        "cat", 
+        "/data/allowlist.json"
+    ])
+    allowlist_data = json.loads(read_result.stdout) if is_cmd_successful(read_result) else []
     
-    allowlist_data = []
-    try:
-        with open(allowlist_path, 'r') as f:
-            allowlist_data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        allowlist_data = []
-    
+    # Check for duplicates
     if any(user.get("name") == name or user.get("uuid") == uuid for user in allowlist_data):
         raise click.ClickException("User already exists in allowlist")
     
+    # Add user and write back
     allowlist_data.append({"name": name, "uuid": uuid})
     
-    with open(allowlist_path, 'w') as f:
+    with NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(allowlist_data, f, indent=2)
+        temp_path = f.name
     
-    cli_logger.success(f"Added user '{name}' to allowlist")
+    try:
+        copy_result = docker_cmd([
+            "cp", 
+            temp_path, 
+            f"{DOCKER_CONTAINER_NAME}:/data/allowlist.json"
+        ])
+        if not is_cmd_successful(copy_result):
+            raise click.ClickException("Failed to update allowlist")
+        cli_logger.success(f"Added user '{name}' to allowlist")
+    finally:
+        os.unlink(temp_path)
 
 @cli.command()
 @click.argument("name")
@@ -207,22 +218,35 @@ def remove_user(name: str) -> None:
     """Removes a user from the allowlist.json file"""
     cli_logger.info(f"Removing user '{name}' from allowlist...")
     
-    allowlist_path = Path(f"{PATH_TO_CONTAINER}/data/allowlist.json")
+    # Read existing allowlist or start empty
+    read_result = docker_cmd([
+        "exec", 
+        DOCKER_CONTAINER_NAME, 
+        "cat", 
+        "/data/allowlist.json"
+    ])
+    allowlist_data = json.loads(read_result.stdout) if is_cmd_successful(read_result) else []
     
-    allowlist_data = []
-    try:
-        with open(allowlist_path, 'r') as f:
-            allowlist_data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        allowlist_data = []
-    
+    # Find and remove user
     original_count = len(allowlist_data)
     allowlist_data = [user for user in allowlist_data if user.get("name") != name]
     
     if len(allowlist_data) == original_count:
         raise click.ClickException(f"User '{name}' not found in allowlist")
     
-    with open(allowlist_path, 'w') as f:
+    # Write back to container
+    with NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(allowlist_data, f, indent=2)
+        temp_path = f.name
     
-    cli_logger.success(f"Removed user '{name}' from allowlist")
+    try:
+        copy_result = docker_cmd([
+            "cp", 
+            temp_path, 
+            f"{DOCKER_CONTAINER_NAME}:/data/allowlist.json"
+        ])
+        if not is_cmd_successful(copy_result):
+            raise click.ClickException("Failed to update allowlist")
+        cli_logger.success(f"Removed user '{name}' from allowlist")
+    finally:
+        os.unlink(temp_path)
