@@ -5,9 +5,17 @@ A simple CLI to manage a Minecraft Bedrock Server running in Docker.
 ## Usage
 
 ```bash
-mc-cli start
-mc-cli up
-mc-cli stop
-mc-cli down
-mc-cli logs
-mc-cli backup mybackup.tar.gz /local_dir/for/backup
+# Server management
+mc-cli start          # Start the server
+mc-cli stop           # Stop the server
+mc-cli up             # Rebuild and start server
+mc-cli down           # Stop and cleanup server
+mc-cli status         # Check server status
+mc-cli logs           # View server logs
+
+# Backup
+mc-cli backup [name] [destination]  # Backup world data
+
+# User management
+mc-cli add-user <name> <uuid>       # Add user to allowlist
+mc-cli remove-user <name>           # Remove user from allowlist
