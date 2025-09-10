@@ -312,7 +312,7 @@ def grant(name: str, permission: str) -> None:
         os.unlink(temp_path)
 
 @cli.command()
-@cli.argument("name")
+@click.argument("name")
 def revoke(name: str) -> None:
     """Revokes a user from the permissions list"""
     # Read existing allowlist or start empty
