@@ -19,3 +19,4 @@ mc-cli backup [name] [destination]  # Backup world data
 # User management
 mc-cli add-user <name> <uuid>       # Add user to allowlist
 mc-cli remove-user <name>           # Remove user from allowlist
+mc-cli grant <name> [permission]  # Grant permission level (visitor/member/operator/admin)
