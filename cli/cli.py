@@ -283,7 +283,7 @@ def grant(name: str, permission: str) -> None:
         "exec",
         DOCKER_CONTAINER_NAME,
         "cat",
-        "/data/permissionlist.json"
+        "/data/permissions.json"
     ])
     permissionlist_data = json.loads(output.stdout) if is_cmd_successful(output) else []
 
@@ -303,11 +303,11 @@ def grant(name: str, permission: str) -> None:
         copy_result = docker_cmd([
             "cp", 
             temp_path, 
-            f"{DOCKER_CONTAINER_NAME}:/data/permissionlist.json"
+            f"{DOCKER_CONTAINER_NAME}:/data/permissions.json"
         ])
         if not is_cmd_successful(copy_result):
-            raise click.ClickException("Failed to update permissionlist")
-        cli_logger.success(f"Added user '{name}' to permissionlist with permission of {permission.lower()}")
+            raise click.ClickException("Failed to update permissions")
+        cli_logger.success(f"Added user '{name}' to permissions with permission of {permission.lower()}")
     finally:
         os.unlink(temp_path)
 
@@ -336,7 +336,7 @@ def revoke(name: str) -> None:
         "exec",
         DOCKER_CONTAINER_NAME,
         "cat",
-        "/data/permissionlist.json"
+        "/data/permissions.json"
     ])
     permissionlist_data = json.loads(output.stdout) if is_cmd_successful(output) else []
 
@@ -344,7 +344,7 @@ def revoke(name: str) -> None:
     new_permissionlist_data = [entry for entry in permissionlist_data if entry.get("xuid") != user_xuid]
 
     if len(new_permissionlist_data) == len(permissionlist_data):
-        raise click.ClickException(f"User '{name}' is not in the permissionlist")
+        raise click.ClickException(f"User '{name}' is not in the permissions")
 
     # Write to temp file
     with NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -355,7 +355,7 @@ def revoke(name: str) -> None:
         copy_result = docker_cmd([
             "cp", 
             temp_path, 
-            f"{DOCKER_CONTAINER_NAME}:/data/permissionlist.json"
+            f"{DOCKER_CONTAINER_NAME}:/data/permissions.json"
         ])
         if not is_cmd_successful(copy_result):
             raise click.ClickException("Failed to update permissionlist")
