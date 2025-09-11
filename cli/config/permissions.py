@@ -5,4 +5,3 @@ class PermissionLevel(Enum):
     VISITOR = "visitor"
     MEMBER = "member"
     OPERATOR = "operator"
-    ADMIN = "admin"
