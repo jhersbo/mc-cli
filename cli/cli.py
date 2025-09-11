@@ -1,3 +1,4 @@
+import datetime
 import json
 from tempfile import NamedTemporaryFile
 import os
@@ -121,7 +122,7 @@ def logs() -> None:
         cli_logger.info("Logs following stopped by user")
 
 @cli.command()
-@click.argument("backup_name", default="backup.tar.gz")
+@click.argument("backup_name", default=f"{datetime.datetime.now().strftime('%Y%m%d')}_backup.tar.gz")
 @click.argument("backup_dest", default=PATH_TO_LOCAL_BACKUPS)
 def backup(backup_name: str, backup_dest: str) -> None:
     """Backup the Minecraft world data."""
