@@ -1,45 +1,10 @@
-from enum import member
 import json
-from math import perm
 from tempfile import NamedTemporaryFile
 import os
-from webbrowser import get
 import click
 import subprocess
-from pathlib import Path
-from cli.config.permissions import PermissionLevel
+from cli.utils.docker import DOCKER_CONTAINER_NAME, PATH_TO_CONTAINER, PATH_TO_LOCAL_BACKUPS, docker_cmd, is_cmd_successful
 from cli.utils.logger import cli_logger
-
-DOCKER_CONTAINER_NAME = "mc-bedrock"
-PATH_TO_CONTAINER = str(Path("~/mc-bedrock").expanduser().resolve())
-PATH_TO_LOCAL_BACKUPS = str(Path("~/mc-backups").expanduser().resolve())
-
-def docker_cmd(args: str) -> subprocess.CompletedProcess:
-    """Run a docker command and return the result."""
-    command = " ".join(args)
-    cli_logger.docker_command(command, DOCKER_CONTAINER_NAME)
-    
-    result = subprocess.run(["docker"] + args, capture_output=True, text=True)
-    
-    if result.stdout:
-        cli_logger.info("Docker output:")
-        for line in result.stdout.strip().split('\n'):
-            if line.strip():
-                cli_logger.info(f"  {line}")
-    
-    if result.stderr:
-        cli_logger.warning("Docker warnings/errors:")
-        for line in result.stderr.strip().split('\n'):
-            if line.strip():
-                cli_logger.warning(f"  {line}")
-    
-    cli_logger.debug(f"Docker command '{command}' returned code: {result.returncode}")
-    
-    return result
-
-def is_cmd_successful(result: subprocess.CompletedProcess) -> bool:
-    """Check if a docker command was successful."""
-    return result.returncode == 0
 
 @click.group()
 def cli() -> None:
@@ -93,6 +58,20 @@ def stop() -> None:
     else:
         cli_logger.docker_error("stop", DOCKER_CONTAINER_NAME, result.stderr or "Unknown error")
         raise click.ClickException("Docker stop command failed")
+
+@cli.command()
+def restart() -> None:
+    """Restart the Minecraft Bedrock Server"""
+    cli_logger.info(f"Restarting {DOCKER_CONTAINER_NAME}...")
+    result = docker_cmd([
+        "resart",
+        DOCKER_CONTAINER_NAME
+    ])
+
+    if is_cmd_successful(result):
+        cli_logger.docker_success("restart", DOCKER_CONTAINER_NAME)
+    else:
+        cli_logger.docker_error("restart", DOCKER_CONTAINER_NAME, result.stderr or "Unknown error")
 
 @cli.command()
 def down() -> None:

@@ -8,6 +8,7 @@ A simple CLI to manage a Minecraft Bedrock Server running in Docker.
 # Server management
 mc-cli start          # Start the server
 mc-cli stop           # Stop the server
+mc-cli restart        # Restart the server
 mc-cli up             # Rebuild and start server
 mc-cli down           # Stop and cleanup server
 mc-cli status         # Check server status
