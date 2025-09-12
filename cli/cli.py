@@ -65,7 +65,7 @@ def restart() -> None:
     """Restart the Minecraft Bedrock Server"""
     cli_logger.info(f"Restarting {DOCKER_CONTAINER_NAME}...")
     result = docker_cmd([
-        "resart",
+        "restart",
         DOCKER_CONTAINER_NAME
     ])
 
