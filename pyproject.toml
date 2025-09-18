@@ -1,3 +1,16 @@
 [build-system]
 requires = ["setuptools", "wheel", "build"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "mc-cli"
+version = "0.0.3"
+description = "A simple CLI to manage a Minecraft Bedrock Server running in Docker."
+readme = "README.md"
+authors = [{ name = "jhersbo" }]
+license = { text = "MIT" }
+requires-python = ">=3.7"
+dependencies = [
+    "click",
+    "loguru"
+]
