@@ -9,7 +9,7 @@ DOCKER_CONTAINER_NAME = "mc-bedrock"
 PATH_TO_CONTAINER = str(Path("~/mc-bedrock").expanduser().resolve())
 PATH_TO_LOCAL_BACKUPS = str(Path("~/mc-backups").expanduser().resolve())
 
-def docker_cmd(args: str) -> subprocess.CompletedProcess:
+def docker_cmd(args: list[str]) -> subprocess.CompletedProcess:
     """Run a docker command and return the result."""
     command = " ".join(args)
     cli_logger.docker_command(command, DOCKER_CONTAINER_NAME)
